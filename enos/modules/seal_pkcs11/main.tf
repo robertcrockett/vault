@@ -95,6 +95,7 @@ module "target" {
   ami_id          = module.ec2_info.ami_ids["arm64"]["ubuntu"]["22.04"]
   cluster_tag_key = local.id
   common_tags     = var.common_tags
+  disable_selinux = false
   instance_count  = 1
   instance_types = {
     amd64 = "t3a.small"
