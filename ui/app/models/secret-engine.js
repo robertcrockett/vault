@@ -145,7 +145,7 @@ export default class SecretEngineModel extends Model {
       return 'vault.cluster.secrets.backend.overview';
     }
     if (isAddonEngine(this.engineType, this.version)) {
-      const { engineRoute } = allEngines().findBy('type', this.engineType);
+      const { engineRoute } = allEngines().find((engine) => engine.type === this.engineType);
       return `vault.cluster.secrets.backend.${engineRoute}`;
     }
     if (this.isV2KV) {
@@ -153,6 +153,13 @@ export default class SecretEngineModel extends Model {
       return 'vault.cluster.secrets.backend.kv.list';
     }
     return `vault.cluster.secrets.backend.list-root`;
+  }
+
+  get backendConfigurationLink() {
+    if (isAddonEngine(this.engineType, this.version)) {
+      return `vault.cluster.secrets.backend.${this.engineType}.configuration`;
+    }
+    return `vault.cluster.secrets.backend.configuration`;
   }
 
   get localDisplay() {

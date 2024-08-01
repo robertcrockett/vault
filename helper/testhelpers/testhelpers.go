@@ -434,30 +434,6 @@ func RekeyCluster(t testing.T, cluster *vault.TestCluster, recovery bool) [][]by
 	return newKeys
 }
 
-func RaftClusterJoinNodes(t testing.T, cluster *vault.TestCluster) {
-	leader := cluster.Cores[0]
-
-	leaderInfos := []*raft.LeaderJoinInfo{
-		{
-			LeaderAPIAddr: leader.Client.Address(),
-			TLSConfig:     leader.TLSConfig(),
-		},
-	}
-
-	// Join followers
-	for i := 1; i < len(cluster.Cores); i++ {
-		core := cluster.Cores[i]
-		_, err := core.JoinRaftCluster(namespace.RootContext(context.Background()), leaderInfos, false)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		cluster.UnsealCore(t, core)
-	}
-
-	WaitForNCoresUnsealed(t, cluster, len(cluster.Cores))
-}
-
 // HardcodedServerAddressProvider is a ServerAddressProvider that uses
 // a hardcoded map of raft node addresses.
 //
@@ -752,7 +728,7 @@ func RetryUntilAtCadence(t testing.T, timeout, sleepTime time.Duration, f func()
 	RetryUntilAtCadenceWithHandler(t, timeout, sleepTime, fail, f)
 }
 
-// RetryUntilAtCadence runs f until it returns a nil result or the timeout is reached.
+// RetryUntilAtCadenceWithHandler runs f until it returns a nil result or the timeout is reached.
 // If a nil result hasn't been obtained by timeout, onFailure is called.
 func RetryUntilAtCadenceWithHandler(t testing.T, timeout, sleepTime time.Duration, onFailure func(error), f func() error) {
 	t.Helper()
@@ -767,8 +743,11 @@ func RetryUntilAtCadenceWithHandler(t testing.T, timeout, sleepTime time.Duratio
 	onFailure(err)
 }
 
-// RetryUntil runs f until it returns a nil result or the timeout is reached.
+// RetryUntil runs f with a 100ms pause between calls, until f returns a nil result
+// or the timeout is reached.
 // If a nil result hasn't been obtained by timeout, calls t.Fatal.
+// NOTE: See RetryUntilAtCadence if you want to specify a different wait/sleep
+// duration between calls.
 func RetryUntil(t testing.T, timeout time.Duration, f func() error) {
 	t.Helper()
 	RetryUntilAtCadence(t, timeout, 100*time.Millisecond, f)
